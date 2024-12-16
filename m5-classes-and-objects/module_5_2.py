@@ -14,7 +14,7 @@ class House:
         return self.number_of_floors
 
     def __str__(self):
-        return str(f"Название: {self.name}, кол-во этажей: {self.number_of_floors}")
+        return f"Название: {self.name}, кол-во этажей: {self.number_of_floors}"
 
 
 h1 = House('ЖК Эльбрус', 10)
