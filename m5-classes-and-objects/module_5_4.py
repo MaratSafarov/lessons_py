@@ -63,6 +63,7 @@ class House:
         self.number_of_floors += value
         return self
 
+
 h1 = House('ЖК Эльбрус', 10)
 print(House.houses_history)
 h2 = House('ЖК Акация', 20)
