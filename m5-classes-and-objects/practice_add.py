@@ -1,5 +1,5 @@
-import hashlib
-import time
+import hashlib, time
+
 
 class User:
     def __init__(self, nickname, password, age):
