@@ -1,50 +1,94 @@
+import hashlib
+import time
+
 class User:
-    #nickname
-    #password(в хэшированном виде, число)
-    #age
+    def __init__(self, nickname, password, age):
+        self.nickname = nickname
+        self.password = self.hash_password(password)
+        self.age = age
+
+    @staticmethod
+    def hash_password(password):
+        return hashlib.sha256(password.encode()).hexdigest()
+
+    def __str__(self):
+        return self.nickname
+
+    def __eq__(self, other):
+        return self.nickname == other.nickname and self.password == other.password
+
+    def __hash__(self):
+        return hash(self.nickname)
 
 
 class Video:
-    #title (заголовок, строка)
-    #duration (продолжительность, секунды)
-    #time_now (секунда остановки(изначально 0))
-    #adult_mode (ограничение по возрасту
-    #bool (False по умолчанию))
+    def __init__(self, title, duration, adult_mode=False):
+        self.title = title
+        self.duration = duration
+        self.time_now = 0
+        self.adult_mode = adult_mode
+
+    def __str__(self):
+        return self.title
 
 
 class UrTube:
-    #users (список объектов User)
-    #videos (список объектов Video)
-    #current_user (текущий пользователь, User)
+    def __init__(self):
+        self.users = []
+        self.videos = []
+        self.current_user = None
 
-    #log_in, принимает на вход: nickname, password и пытается найти пользователя в users с такими же логином и паролем
-    #    current_user меняется на найденного (если такой пользователь существует)
-    #    Помните, что password передаётся в виде строки, а сравнивается по хэшу.
+    def log_in(self, nickname, password):
+        hashed_password = User.hash_password(password)
+        for user in self.users:
+            if user.nickname == nickname and user.password == hashed_password:
+                self.current_user = user
+                return
 
-    #register, который принимает три аргумента: nickname, password, age, и добавляет пользователя в список,
-    #    если пользователя не существует(с таким же nickname)
-    #    Если существует, выводит на экран: "Пользователь {nickname} уже существует"
-    #После регистрации, вход выполняется автоматически.
+    def register(self, nickname, password, age):  # регистрация нового пользователя
+        for user in self.users:
+            if user.nickname == nickname:
+                print(f"Пользователь {nickname} уже существует")
+                return
+        new_user = User(nickname, password, age)
+        self.users.append(new_user)
+        self.current_user = new_user  # автоматический вход после регистрации
 
-    #log_out для сброса текущего пользователя на None.
+    def log_out(self):
+        self.current_user = None  # сброс текущего пользователя на None
 
-    #add, который принимает неограниченное кол-во объектов класса Video и все добавляет в videos, если с таким же
-    #    названием видео ещё не существует
-    #В противном случае ничего не происходит.
+    def add(self, *videos):
+        for video in videos:
+            if video not in self.videos:
+                self.videos.append(video)
 
-    #get_videos, который принимает поисковое слово и возвращает список названий всех видео, содержащих поисковое слово
-    #Следует учесть, что слово 'UrbaN' присутствует в строке 'Urban the best'(не учитывать регистр).
+    def get_videos(self, search_word):
+        return [video.title for video in self.videos if search_word.lower() in video.title.lower()]
 
-    #watch_video, который принимает название фильма, если не находит точного совпадения(вплоть до пробела), то ничего
-    #не воспроизводится, если же находит - ведётся отчёт в консоль на какой секунде ведётся просмотр
-    #После текущее время просмотра данного видео сбрасывается
-   #     Для watch_video особенности:
-   # Для паузы между выводами секунд воспроизведения можно использовать функцию sleep из модуля time.
-   # Воспроизводить видео можно только тогда, когда пользователь вошёл в UrTube.
-   # В противном случае выводить в консоль надпись: "Войдите в аккаунт, чтобы смотреть видео"
-   # Если видео найдено, следует учесть, что пользователю может быть отказано в просмотре, т.к.есть ограничения 18 +
-   # Должно выводиться сообщение: "Вам нет 18 лет, пожалуйста покиньте страницу"
-   # После воспроизведения нужно выводить: "Конец видео"
+    def watch_video(self, title):
+        if not self.current_user:  # проверка, вошел ли пользователь
+            print("Войдите в аккаунт, чтобы смотреть видео.")
+            return
+
+        video = None  # поиск видео по точному совпадению заголовка
+        for v in self.videos:
+            if v.title == title:
+                video = v
+                break
+        if not video:
+            return
+
+        if video.adult_mode and self.current_user.age < 18:  # проверка возрастного ограничения
+            print("Вам нет 18 лет, пожалуйста покиньте страницу.")
+            return
+
+        for second in range(1, video.duration + 1):
+            print(second, end=' ', flush=True)  # вывод каждой секунды
+            time.sleep(1)  # пауза в 1 секунду между выводами
+
+        print("Конец видео")
+        video.time_now = 0  # сброс времени просмотра после завершения
+
 
 ur = UrTube()
 v1 = Video('Лучший язык программирования 2024 года', 200)
